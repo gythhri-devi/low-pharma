@@ -74,7 +74,7 @@ export default function Checkout() {
         ? `${address.name}, ${address.house_no}, ${address.road}, ${address.city}, ${address.state} ${address.pin_code}`
         : '';
 
-      await API.post('/api/orders/', {
+      const res = await API.post('/api/orders/', {
         address_text: addressText,
         coupon_code: couponApplied ? coupon : '',
         payment_method: paymentMethod,
@@ -83,7 +83,7 @@ export default function Checkout() {
 
       clearCart();
       showToast('Order placed successfully!');
-      navigate('/thankyou');
+      navigate('/thankyou', { state: { order: res.data } });
     } catch (err) {
       showToast(err.response?.data?.detail || 'Order failed');
     }

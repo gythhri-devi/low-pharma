@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
 
 from ..database import get_db
-from ..models import Prescription, User, OrderItem, Medicine
+from ..models import Prescription, User, OrderItem, Medicine, Order
 from ..schemas import PrescriptionResponse
 from ..auth import get_current_user
 
@@ -99,9 +99,13 @@ def get_pending_prescriptions(user=Depends(get_current_user), db: Session = Depe
 def get_all_prescriptions(user=Depends(get_current_user), db: Session = Depends(get_db)):
     if user.role != "pharmacist":
         raise HTTPException(status_code=403, detail="Not authorized")
+    from sqlalchemy import or_
     order_ids_sq = _pharmacist_order_ids(db, user.id)
     presc = db.query(Prescription).filter(
-        Prescription.order_id.in_(order_ids_sq),
+        or_(
+            Prescription.order_id.in_(order_ids_sq),
+            Prescription.order_id.is_(None),
+        )
     ).order_by(Prescription.uploaded_at.desc()).all()
     return _enrich_prescriptions(presc, db)
 
@@ -120,6 +124,11 @@ def approve_prescription(prescription_id: int, user=Depends(get_current_user), d
         if not has_items:
             raise HTTPException(status_code=403, detail="Not your prescription")
     p.status = "Approved"
+    if p.order_id:
+        order = db.query(Order).filter(Order.id == p.order_id).first()
+        if order:
+            order.prescription_status = "Approved"
+            order.delivery_stage = "Processing"
     db.commit()
     return {"message": "Prescription approved"}
 
@@ -138,5 +147,10 @@ def deny_prescription(prescription_id: int, user=Depends(get_current_user), db: 
         if not has_items:
             raise HTTPException(status_code=403, detail="Not your prescription")
     p.status = "Denied"
+    if p.order_id:
+        order = db.query(Order).filter(Order.id == p.order_id).first()
+        if order:
+            order.prescription_status = "Rejected"
+            order.delivery_stage = "Cancelled"
     db.commit()
     return {"message": "Prescription denied"}

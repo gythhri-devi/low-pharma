@@ -32,8 +32,13 @@ def _auto_progress_delivery(orders, db: Session):
         if order.prescription_status == "Rejected":
             continue
 
+        # Approved prescription orders should be at least "Processing"
+        if order.prescription_status == "Approved" and order.delivery_stage == "Placed":
+            order.delivery_stage = "Processing"
+            changed = True
+
         hours_old = (now - order.created_at).total_seconds() / 3600
-        if hours_old < 2:
+        if hours_old < 0.5:
             new_stage = "Placed"
         elif hours_old < 8:
             new_stage = "Processing"
@@ -44,7 +49,9 @@ def _auto_progress_delivery(orders, db: Session):
         else:
             new_stage = "Delivered"
 
-        if order.delivery_stage != new_stage:
+        current_idx = DELIVERY_STAGES.index(order.delivery_stage) if order.delivery_stage in DELIVERY_STAGES else 0
+        new_idx = DELIVERY_STAGES.index(new_stage) if new_stage in DELIVERY_STAGES else 0
+        if new_idx > current_idx:
             order.delivery_stage = new_stage
             changed = True
     if changed:
@@ -135,6 +142,7 @@ def create_order(req: OrderCreate, user=Depends(get_current_user), db: Session =
         presc = db.query(Prescription).filter(Prescription.id == req.prescription_id).first()
         if presc:
             presc.order_id = order.id
+            presc.status = "Pending"
 
     db.query(CartItem).filter(CartItem.user_id == user.id).delete()
     db.commit()
@@ -182,6 +190,9 @@ def approve_order(order_id: int, user=Depends(get_current_user), db: Session = D
         raise HTTPException(status_code=403, detail="Not your order")
     order.prescription_status = "Approved"
     order.delivery_stage = "Processing"
+    presc = db.query(Prescription).filter(Prescription.order_id == order_id).first()
+    if presc:
+        presc.status = "Approved"
     db.commit()
     return {"message": "Order approved"}
 
@@ -200,6 +211,9 @@ def deny_order(order_id: int, user=Depends(get_current_user), db: Session = Depe
         raise HTTPException(status_code=403, detail="Not your order")
     order.prescription_status = "Rejected"
     order.delivery_stage = "Cancelled"
+    presc = db.query(Prescription).filter(Prescription.order_id == order_id).first()
+    if presc:
+        presc.status = "Denied"
     db.commit()
     return {"message": "Order denied"}
 
