@@ -69,6 +69,10 @@ export default function Checkout() {
   };
 
   const handlePayNow = async () => {
+    if (!address) {
+      showToast('Please add a delivery address before placing your order');
+      return;
+    }
     try {
       const addressText = address
         ? `${address.name}, ${address.house_no}, ${address.road}, ${address.city}, ${address.state} ${address.pin_code}`
@@ -210,7 +214,7 @@ export default function Checkout() {
         <button
           className="btn-pink"
           style={{ width: '100%', marginTop: 24 }}
-          disabled={!paymentMethod}
+          disabled={!paymentMethod || !address}
           onClick={handlePayNow}
         >
           Pay Now
