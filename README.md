@@ -15,6 +15,15 @@ A fullstack web application for online medicine ordering with two roles: **Custo
 | Auth | JWT (python-jose) + bcrypt |
 | File Upload | python-multipart |
 
+## Key Highlights
+
+- 🔐 JWT-based Authentication with role-based access
+- 💊 Prescription validation with expiry logic (15-day validity)
+- 📦 Real-time inventory tracking with stock validation
+- 📊 Analytics dashboard with sales & stock insights
+- 🧾 End-to-end order lifecycle management
+- 📁 File upload support for prescriptions
+
 ## Features
 
 ### Customer
