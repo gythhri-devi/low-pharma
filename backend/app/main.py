@@ -22,24 +22,10 @@ if DATABASE_URL.startswith("sqlite"):
 
 app = FastAPI(title="LowPharma API")
 
-ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://localhost:3000",
-]
-frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url:
-    ALLOWED_ORIGINS.append(frontend_url)
-    # Also allow Vercel preview deployments
-    if "vercel.app" in frontend_url:
-        ALLOWED_ORIGINS.append("https://low-pharma-git-main-abhineetraj07s-projects.vercel.app")
-        ALLOWED_ORIGINS.append("https://low-pharma-abhineetraj07s-projects.vercel.app")
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
