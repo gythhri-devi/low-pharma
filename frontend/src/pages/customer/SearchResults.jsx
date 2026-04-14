@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
 import './SearchResults.css';
 
-import { API_URL } from '../../api/axios';
+import { fileUrl } from '../../utils/fileUrl';
 
 export default function SearchResults() {
   const [searchParams] = useSearchParams();
@@ -76,7 +76,7 @@ export default function SearchResults() {
             <div key={med.id} className="result-item">
               <div className="result-img">
                 {med.image_url ? (
-                  <img src={`${API_URL}/uploads/${med.image_url}`} alt={med.name} />
+                  <img src={fileUrl(med.image_url)} alt={med.name} />
                 ) : (
                   <span>💊</span>
                 )}

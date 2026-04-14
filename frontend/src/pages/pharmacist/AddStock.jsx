@@ -37,7 +37,7 @@ export default function AddStock() {
         const formData = new FormData();
         formData.append('file', imageFile);
         const uploadRes = await API.post('/api/medicines/upload-image', formData);
-        image_url = uploadRes.data.filename;
+        image_url = uploadRes.data.url || uploadRes.data.filename;
       }
       await API.post('/api/medicines/', {
         ...form,

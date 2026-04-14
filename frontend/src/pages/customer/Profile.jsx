@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import API, { API_URL } from '../../api/axios';
+import API from '../../api/axios';
+import { fileUrl } from '../../utils/fileUrl';
 import './Profile.css';
 
 const DELIVERY_STAGES = ['Placed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
@@ -243,7 +244,7 @@ export default function Profile() {
                   <p>Status: {p.status}</p>
                   <p>Uploaded: {new Date(p.uploaded_at).toLocaleDateString()}</p>
                   <a
-                    href={`${API_URL}/uploads/${p.filename}`}
+                    href={fileUrl(p.filename)}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: 'var(--pink)', fontWeight: 700, fontSize: 13 }}

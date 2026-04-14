@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import API from '../../api/axios';
 import './Cart.css';
 
-import { API_URL } from '../../api/axios';
+import { fileUrl } from '../../utils/fileUrl';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -74,7 +74,7 @@ export default function Cart() {
           <div key={item.id} className="cart-item">
             <div className="cart-item-img">
               {item.image_url ? (
-                <img src={`${API_URL}/uploads/${item.image_url}`} alt={item.name} />
+                <img src={fileUrl(item.image_url)} alt={item.name} />
               ) : (
                 <span>💊</span>
               )}

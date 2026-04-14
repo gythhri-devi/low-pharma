@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API, { API_URL } from '../../api/axios';
+import API from '../../api/axios';
+import { fileUrl } from '../../utils/fileUrl';
 import { useToast } from '../../context/ToastContext';
 import './Pharmacist.css';
 
@@ -53,11 +54,11 @@ export default function Prescriptions() {
         <div key={p.id} className="prescription-card">
           <div className="prescription-card-header">
             <div><span>Patient</span><p>{p.patient_name || `User #${p.user_id}`}</p></div>
-            <div><span>Medicines</span><p><a href={`${API_URL}/uploads/${p.filename}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink)', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>{p.original_name || 'Prescription'}</a></p></div>
+            <div><span>Medicines</span><p><a href={fileUrl(p.filename)} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink)', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>{p.original_name || 'Prescription'}</a></p></div>
             <div><span>Uploaded On</span><p>{new Date(p.uploaded_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p></div>
             <div>
               <a className="prescription-actions view-link"
-                 href={`${API_URL}/uploads/${p.filename}`}
+                 href={fileUrl(p.filename)}
                  target="_blank" rel="noopener noreferrer"
               >
                 View Prescription
@@ -78,7 +79,7 @@ export default function Prescriptions() {
             <div key={p.id} className="prescription-card" style={{ opacity: 0.8 }}>
               <div className="prescription-card-header">
                 <div><span>Patient</span><p>{p.patient_name || `User #${p.user_id}`}</p></div>
-                <div><span>File</span><p><a href={`${API_URL}/uploads/${p.filename}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink)', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>{p.original_name}</a></p></div>
+                <div><span>File</span><p><a href={fileUrl(p.filename)} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink)', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>{p.original_name}</a></p></div>
                 <div><span>Uploaded On</span><p>{new Date(p.uploaded_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
                 <div>
                   <span className={`status-badge ${p.status === 'Approved' ? 'approved' : 'denied'}`}>

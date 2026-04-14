@@ -4,7 +4,7 @@ import API from '../../api/axios';
 import { useCart } from '../../context/CartContext';
 import './MedicineDetail.css';
 
-import { API_URL } from '../../api/axios';
+import { fileUrl } from '../../utils/fileUrl';
 
 export default function MedicineDetail() {
   const { id } = useParams();
@@ -30,7 +30,7 @@ export default function MedicineDetail() {
       <div className="detail-content">
         <div className="detail-image">
           {medicine.image_url ? (
-            <img src={`${API_URL}/uploads/${medicine.image_url}`} alt={medicine.name} />
+            <img src={fileUrl(medicine.image_url)} alt={medicine.name} />
           ) : (
             <span>💊</span>
           )}

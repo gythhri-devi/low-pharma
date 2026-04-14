@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import API from '../../api/axios';
 import './Home.css';
 
-import { API_URL } from '../../api/axios';
+import { fileUrl } from '../../utils/fileUrl';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ export default function Home() {
             <div key={med.id} className="med-card" onClick={() => navigate(`/medicine/${med.id}`)}>
               <div className="med-img">
                 {med.image_url ? (
-                  <img src={`${API_URL}/uploads/${med.image_url}`} alt={med.name} />
+                  <img src={fileUrl(med.image_url)} alt={med.name} />
                 ) : (
                   <span>💊</span>
                 )}

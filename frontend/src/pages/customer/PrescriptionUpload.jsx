@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API, { API_URL } from '../../api/axios';
+import API from '../../api/axios';
+import { fileUrl } from '../../utils/fileUrl';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
 import './PrescriptionUpload.css';
@@ -131,7 +132,7 @@ export default function PrescriptionUpload() {
                     <span className="picker-item-days">{p.days_remaining} days remaining</span>
                   </div>
                   <a
-                    href={`${API_URL}/uploads/${p.filename}`}
+                    href={fileUrl(p.filename)}
                     target="_blank"
                     rel="noreferrer"
                     className="picker-view-link"
