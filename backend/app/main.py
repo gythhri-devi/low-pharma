@@ -1,35 +1,46 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
 
 from sqlalchemy import inspect, text
-from .database import engine, Base
+from .database import engine, Base, DATABASE_URL
 from .routes import auth, medicines, cart, orders, prescriptions, addresses, profile, pharmacist
 
 Base.metadata.create_all(bind=engine)
 
-# Add pharmacist_id column if it doesn't exist (migration for existing DBs)
-with engine.connect() as conn:
-    inspector = inspect(engine)
-    columns = [c["name"] for c in inspector.get_columns("medicines")]
-    if "pharmacist_id" not in columns:
-        conn.execute(text("ALTER TABLE medicines ADD COLUMN pharmacist_id INTEGER REFERENCES users(id)"))
-        conn.commit()
+# SQLite-only migration for local dev
+if DATABASE_URL.startswith("sqlite"):
+    with engine.connect() as conn:
+        inspector = inspect(engine)
+        columns = [c["name"] for c in inspector.get_columns("medicines")]
+        if "pharmacist_id" not in columns:
+            conn.execute(text("ALTER TABLE medicines ADD COLUMN pharmacist_id INTEGER REFERENCES users(id)"))
+            conn.commit()
 
 app = FastAPI(title="LowPharma API")
 
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    ALLOWED_ORIGINS.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
-os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+# Serve local uploads only in dev
+if DATABASE_URL.startswith("sqlite"):
+    uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+    os.makedirs(uploads_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 app.include_router(auth.router)
 app.include_router(medicines.router)

@@ -1,5 +1,7 @@
 import os
 import uuid
+import cloudinary
+import cloudinary.uploader
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
@@ -41,6 +43,12 @@ def _enrich_prescriptions(prescriptions, db):
 
 router = APIRouter(prefix="/api/prescriptions", tags=["prescriptions"])
 
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+)
+
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -52,13 +60,23 @@ async def upload_prescription(
     user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    ext = os.path.splitext(file.filename)[1]
-    filename = f"{uuid.uuid4()}{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
-
     content = await file.read()
-    with open(filepath, "wb") as f:
-        f.write(content)
+
+    if os.getenv("CLOUDINARY_CLOUD_NAME"):
+        import io
+        result = cloudinary.uploader.upload(
+            io.BytesIO(content),
+            folder="lowpharma/prescriptions",
+            public_id=str(uuid.uuid4()),
+            resource_type="auto",
+        )
+        filename = result["secure_url"]
+    else:
+        ext = os.path.splitext(file.filename)[1]
+        filename = f"{uuid.uuid4()}{ext}"
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        with open(filepath, "wb") as f:
+            f.write(content)
 
     prescription = Prescription(
         user_id=user.id,

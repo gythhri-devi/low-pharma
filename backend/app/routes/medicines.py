@@ -1,6 +1,8 @@
 import os
 import uuid
 import random
+import cloudinary
+import cloudinary.uploader
 
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session, joinedload
@@ -16,6 +18,13 @@ from ..auth import get_current_user
 class StockUpdate(BaseModel):
     quantity: int
 
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+)
+
+# Local fallback for dev
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "medicines")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -117,12 +126,20 @@ def get_bestsellers(db: Session = Depends(get_db)):
 
 @router.post("/upload-image")
 def upload_medicine_image(file: UploadFile = File(...), user=Depends(get_current_user)):
+    if os.getenv("CLOUDINARY_CLOUD_NAME"):
+        result = cloudinary.uploader.upload(
+            file.file,
+            folder="lowpharma/medicines",
+            public_id=str(uuid.uuid4()),
+        )
+        return {"url": result["secure_url"], "filename": result["secure_url"]}
+    # Local fallback
     ext = os.path.splitext(file.filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)
     with open(filepath, "wb") as f:
         f.write(file.file.read())
-    return {"filename": f"medicines/{filename}"}
+    return {"url": f"/uploads/medicines/{filename}", "filename": f"medicines/{filename}"}
 
 
 @router.get("/{medicine_id}", response_model=MedicineResponse)
