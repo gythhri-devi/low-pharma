@@ -118,6 +118,12 @@ export default function Signup() {
                 required
                 style={{ width: '100%', paddingRight: '2.5rem' }}
               />
+              <span
+                onClick={() => setShowPassword(p => !p)}
+                style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', fontSize: '1.1rem', userSelect: 'none' }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </span>
             </div>
 
             {role === 'customer' && pharmacists.length > 0 && (
