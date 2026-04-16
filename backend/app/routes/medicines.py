@@ -159,10 +159,33 @@ def get_medicine(medicine_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=MedicineResponse)
 def add_medicine(med: MedicineCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
-    medicine = Medicine(**med.model_dump(), pharmacist_id=user.id)
-    db.add(medicine)
-    db.commit()
-    db.refresh(medicine)
+    existing = db.query(Medicine).filter(
+        Medicine.name.ilike(med.name),
+        Medicine.brand.ilike(med.brand),
+        Medicine.pharmacist_id == user.id,
+    ).first()
+
+    if existing:
+        existing.quantity += med.quantity
+        if med.exp_date:
+            existing.exp_date = med.exp_date
+        if med.mfg_date:
+            existing.mfg_date = med.mfg_date
+        if med.mrp:
+            existing.mrp = med.mrp
+        if med.cost_per_unit:
+            existing.cost_per_unit = med.cost_per_unit
+        if med.image_url:
+            existing.image_url = med.image_url
+        db.commit()
+        db.refresh(existing)
+        medicine = existing
+    else:
+        medicine = Medicine(**med.model_dump(), pharmacist_id=user.id)
+        db.add(medicine)
+        db.commit()
+        db.refresh(medicine)
+
     data = medicine.__dict__.copy()
     data["pharmacy_name"] = user.pharmacy_name or ""
     return data
