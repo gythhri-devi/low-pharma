@@ -14,6 +14,7 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -71,13 +72,22 @@ export default function Login() {
               onChange={(e) => setUsername(e.target.value)}
               required
             />
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{ width: '100%', paddingRight: '2.5rem' }}
+              />
+              <span
+                onClick={() => setShowPassword(p => !p)}
+                style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', fontSize: '1.1rem', userSelect: 'none' }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </span>
+            </div>
 
             <p className="forgot-link">
               <a onClick={() => navigate(`/forgot-password/${role}`)}>Forgot Password?</a>
