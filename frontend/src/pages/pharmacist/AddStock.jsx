@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import API from '../../api/axios';
@@ -10,20 +10,10 @@ export default function AddStock() {
   const [form, setForm] = useState({
     name: '', brand: '', quantity: '', mfg_date: '', exp_date: '', mrp: '', cost_per_unit: '', category: '', requires_prescription: 0,
   });
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState('');
-  const fileRef = useRef();
 
   const handleChange = (field, value) => {
     setForm({ ...form, [field]: value });
-  };
-
-  const handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async () => {
@@ -32,19 +22,11 @@ export default function AddStock() {
       return;
     }
     try {
-      let image_url = '';
-      if (imageFile) {
-        const formData = new FormData();
-        formData.append('file', imageFile);
-        const uploadRes = await API.post('/api/medicines/upload-image', formData);
-        image_url = uploadRes.data.url || uploadRes.data.filename;
-      }
       await API.post('/api/medicines/', {
         ...form,
         quantity: parseInt(form.quantity) || 0,
         mrp: parseFloat(form.mrp) || 0,
         cost_per_unit: parseFloat(form.cost_per_unit) || 0,
-        image_url,
         requires_prescription: form.requires_prescription,
       });
       showToast('Medicine added to inventory!');
@@ -74,17 +56,6 @@ export default function AddStock() {
         <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 10 }}>
           <label style={{ fontSize: 13, color: 'var(--gray)', fontWeight: 600 }}>Requires Prescription</label>
           <input type="checkbox" checked={form.requires_prescription === 1} onChange={(e) => handleChange('requires_prescription', e.target.checked ? 1 : 0)} />
-        </div>
-
-        <div className="image-upload-field" style={{ gridColumn: '1 / -1' }}>
-          <label style={{ fontSize: 13, color: 'var(--gray)', fontWeight: 600, marginBottom: 4, display: 'block' }}>Medicine Image</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 8, background: 'var(--pink-pale)' }} />}
-            <button type="button" className="btn-pink-outline" style={{ fontSize: 13, padding: '8px 16px' }} onClick={() => fileRef.current?.click()}>
-              {imageFile ? 'Change Image' : 'Upload Image'}
-            </button>
-            <input type="file" ref={fileRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageSelect} />
-          </div>
         </div>
 
         {error && <p className="form-error">{error}</p>}
