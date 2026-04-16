@@ -20,6 +20,7 @@ class User(Base):
     pharmacy_address = Column(String, default="")
     operating_hours = Column(String, default="")
     contact_number = Column(String, default="")
+    preferred_pharmacist_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     addresses = relationship("Address", back_populates="user", cascade="all, delete-orphan")

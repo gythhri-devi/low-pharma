@@ -8,6 +8,7 @@ class SignupRequest(BaseModel):
     email: str
     password: str
     role: str  # "customer" or "pharmacist"
+    preferred_pharmacist_id: Optional[int] = None
 
 
 class LoginRequest(BaseModel):

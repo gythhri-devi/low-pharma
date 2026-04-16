@@ -22,6 +22,7 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
         password_hash=hash_password(req.password),
         role=req.role,
         name=req.username,
+        preferred_pharmacist_id=req.preferred_pharmacist_id,
     )
     db.add(user)
     db.commit()
@@ -52,6 +53,12 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         username=user.username,
         user_id=user.id,
     )
+
+
+@router.get("/pharmacists")
+def get_pharmacists(db: Session = Depends(get_db)):
+    pharmacists = db.query(User).filter(User.role == "pharmacist").all()
+    return [{"id": p.id, "username": p.username, "pharmacy_name": p.pharmacy_name} for p in pharmacists]
 
 
 @router.put("/forgot-password")

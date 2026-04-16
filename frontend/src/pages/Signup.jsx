@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -17,6 +17,14 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [pharmacists, setPharmacists] = useState([]);
+  const [preferredPharmacist, setPreferredPharmacist] = useState('');
+
+  useEffect(() => {
+    if (role === 'customer') {
+      API.get('/api/auth/pharmacists').then(res => setPharmacists(res.data)).catch(() => {});
+    }
+  }, [role]);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -30,6 +38,7 @@ export default function Signup() {
     try {
       const res = await API.post('/api/auth/signup', {
         username, email, password, role,
+        preferred_pharmacist_id: preferredPharmacist ? parseInt(preferredPharmacist) : null,
       });
       // Save token first so subsequent API calls work
       localStorage.setItem('token', res.data.access_token);
@@ -110,6 +119,21 @@ export default function Signup() {
                 style={{ width: '100%', paddingRight: '2.5rem' }}
               />
             </div>
+
+            {role === 'customer' && pharmacists.length > 0 && (
+              <select
+                value={preferredPharmacist}
+                onChange={(e) => setPreferredPharmacist(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '0.5rem', fontSize: '0.95rem' }}
+              >
+                <option value="">Select your pharmacy (optional)</option>
+                {pharmacists.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.pharmacy_name || p.username}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <button type="submit" className="btn-pink">Sign Up</button>
 
