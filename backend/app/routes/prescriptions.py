@@ -12,6 +12,11 @@ from ..schemas import PrescriptionResponse
 from ..auth import get_current_user
 
 
+def _effective_pharmacist_id(user):
+    """Return the pharmacy this pharmacist acts on behalf of."""
+    return user.preferred_pharmacist_id if user.preferred_pharmacist_id else user.id
+
+
 def _pharmacist_order_ids(db, pharmacist_id):
     return db.query(OrderItem.order_id).join(Medicine).filter(
         Medicine.pharmacist_id == pharmacist_id
@@ -105,7 +110,7 @@ def get_my_prescriptions(user=Depends(get_current_user), db: Session = Depends(g
 def get_pending_prescriptions(user=Depends(get_current_user), db: Session = Depends(get_db)):
     if user.role != "pharmacist":
         raise HTTPException(status_code=403, detail="Not authorized")
-    order_ids_sq = _pharmacist_order_ids(db, user.id)
+    order_ids_sq = _pharmacist_order_ids(db, _effective_pharmacist_id(user))
     presc = db.query(Prescription).filter(
         Prescription.status == "Pending",
         Prescription.order_id.in_(order_ids_sq),
@@ -118,7 +123,7 @@ def get_all_prescriptions(user=Depends(get_current_user), db: Session = Depends(
     if user.role != "pharmacist":
         raise HTTPException(status_code=403, detail="Not authorized")
     from sqlalchemy import or_
-    order_ids_sq = _pharmacist_order_ids(db, user.id)
+    order_ids_sq = _pharmacist_order_ids(db, _effective_pharmacist_id(user))
     presc = db.query(Prescription).filter(
         or_(
             Prescription.order_id.in_(order_ids_sq),
@@ -137,7 +142,7 @@ def approve_prescription(prescription_id: int, user=Depends(get_current_user), d
         raise HTTPException(status_code=404, detail="Prescription not found")
     if p.order_id:
         has_items = db.query(OrderItem).join(Medicine).filter(
-            OrderItem.order_id == p.order_id, Medicine.pharmacist_id == user.id
+            OrderItem.order_id == p.order_id, Medicine.pharmacist_id == _effective_pharmacist_id(user)
         ).first()
         if not has_items:
             raise HTTPException(status_code=403, detail="Not your prescription")
@@ -160,7 +165,7 @@ def deny_prescription(prescription_id: int, user=Depends(get_current_user), db: 
         raise HTTPException(status_code=404, detail="Prescription not found")
     if p.order_id:
         has_items = db.query(OrderItem).join(Medicine).filter(
-            OrderItem.order_id == p.order_id, Medicine.pharmacist_id == user.id
+            OrderItem.order_id == p.order_id, Medicine.pharmacist_id == _effective_pharmacist_id(user)
         ).first()
         if not has_items:
             raise HTTPException(status_code=403, detail="Not your prescription")

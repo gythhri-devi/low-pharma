@@ -21,7 +21,7 @@ export default function Signup() {
   const [preferredPharmacist, setPreferredPharmacist] = useState('');
 
   useEffect(() => {
-    if (role === 'customer') {
+    if (role === 'pharmacist') {
       API.get('/api/auth/pharmacists').then(res => setPharmacists(res.data)).catch(() => {});
     }
   }, [role]);
@@ -126,13 +126,13 @@ export default function Signup() {
               </span>
             </div>
 
-            {role === 'customer' && pharmacists.length > 0 && (
+            {role === 'pharmacist' && pharmacists.length > 0 && (
               <select
                 value={preferredPharmacist}
                 onChange={(e) => setPreferredPharmacist(e.target.value)}
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '0.5rem', fontSize: '0.95rem' }}
               >
-                <option value="">Select your pharmacy (optional)</option>
+                <option value="">Select pharmacy you work for (optional)</option>
                 {pharmacists.map(p => (
                   <option key={p.id} value={p.id}>
                     {p.pharmacy_name || p.username}

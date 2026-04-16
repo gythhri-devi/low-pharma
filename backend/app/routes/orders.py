@@ -11,6 +11,11 @@ from ..auth import get_current_user
 DELIVERY_STAGES = ["Placed", "Processing", "Shipped", "Out for Delivery", "Delivered"]
 
 
+def _effective_pharmacist_id(user):
+    """Return the pharmacy this pharmacist acts on behalf of."""
+    return user.preferred_pharmacist_id if user.preferred_pharmacist_id else user.id
+
+
 def _pharmacist_order_ids(db: Session, pharmacist_id: int):
     """Subquery returning order IDs that contain this pharmacist's medicines."""
     return db.query(OrderItem.order_id).join(Medicine).filter(
@@ -164,7 +169,7 @@ def get_my_orders(user=Depends(get_current_user), db: Session = Depends(get_db))
 def get_all_orders(user=Depends(get_current_user), db: Session = Depends(get_db)):
     if user.role != "pharmacist":
         raise HTTPException(status_code=403, detail="Not authorized")
-    order_ids_sq = _pharmacist_order_ids(db, user.id)
+    order_ids_sq = _pharmacist_order_ids(db, _effective_pharmacist_id(user))
     orders = db.query(Order).options(
         joinedload(Order.items).joinedload(OrderItem.medicine).joinedload(Medicine.pharmacist)
     ).filter(Order.id.in_(order_ids_sq)).order_by(Order.created_at.desc()).all()
@@ -184,7 +189,7 @@ def approve_order(order_id: int, user=Depends(get_current_user), db: Session = D
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     has_items = db.query(OrderItem).join(Medicine).filter(
-        OrderItem.order_id == order_id, Medicine.pharmacist_id == user.id
+        OrderItem.order_id == order_id, Medicine.pharmacist_id == _effective_pharmacist_id(user)
     ).first()
     if not has_items:
         raise HTTPException(status_code=403, detail="Not your order")
@@ -205,7 +210,7 @@ def deny_order(order_id: int, user=Depends(get_current_user), db: Session = Depe
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     has_items = db.query(OrderItem).join(Medicine).filter(
-        OrderItem.order_id == order_id, Medicine.pharmacist_id == user.id
+        OrderItem.order_id == order_id, Medicine.pharmacist_id == _effective_pharmacist_id(user)
     ).first()
     if not has_items:
         raise HTTPException(status_code=403, detail="Not your order")
